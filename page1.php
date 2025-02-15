@@ -1,3 +1,6 @@
+<?php
+    session_start();  
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,47 +8,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="style.css">
     <title>หลักสูตร</title>
 </head>
+
 <body>
     <?php include "nav.php" ?> 
-    <h1><center>หลักสูตร</center></h1>
-    
-    <div class="bg-modal" id="bg">      
-        <div class="modal-content">
-            <h1>กรุณากรอกข้อมูล</h1> 
-            <div class="close" onclick="close();">&times;</div>          
-            <input type="text" class="" id="" placeholder="id">
-            <input type="text" class="" id="" placeholder="name">
-            <input type="text" class="" id="" placeholder="credit">
-            <input type="text" class="" id="" placeholder="language">
-            <input type="text" class="" id="" placeholder="year">
-            <input type="text" class="" id="" placeholder="term">
-            <input type="text" class="" id="" placeholder="school year">
-            <button class="btn btn-success btn-sm" onclick="close();">บันทึก</button>
-        </div>
-    </div>
+    <h1><center>หลักสูตร</center></h1>    
     <div class="row mt-4">
         <div class="col-lg-2 col-md-1 col-sm-1"></div>
         <div class="col-lg-8 col-md-10 col-sm-10">
 
-        <button class="btn btn-success" id="add" onclick="show();">เพิ่ม</button> 
+            <div class="mb-3 row">
+                <div class="col-sm-6">
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#Modal">เพิ่ม</button>
+                    <button type="button" class="btn btn-danger">ลบ</button> 
+                    
+                </div> 
+                <div class="col-sm-6">
+                    <div class="input-group">
+                        <select name="year" class="form-select">
+                            <?php
+                                $conn=new PDO("mysql:host=localhost;dbname=ect_chatbot;charset=utf8","root","");
+                                $sql="SELECT * FROM course_year ORDER BY year DESC";
+                                $result=$conn->query($sql);
+                                while($row=$result->fetch()){
+                                    echo "<option value=$row[0]>$row[1]</option>";           
+                                }                              
+                                $conn=null;
+                            ?>                                                
+                        </select>
+                        <form action="page1_addsy.php" method="post">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#Modal-year"><b>+</b></button>
+                            <div class="modal" id="Modal-year">
+                                <div class="modal-dialog">                
+                                    <div class="modal-content">   
+                                        <div class="modal-header"> 
+                                            <h1 class="modal-title fs-5" id="ModalLabel">กรุณากรอกปีการศึกษา</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="input-group mb-3">                                                    
+                                                <input type="text" class="form-control" name="course_year" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">      
+                                            <button type="submit" class="btn btn-success mx-auto">บันทึก</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>                 
+                </div>        
+            </div>
+                      
+            <?php  
+                $conn=new PDO("mysql:host=localhost;dbname=ect_chatbot;charset=utf8","root","");
+                $sql="SELECT subject.id,subject.name,subject.credit,subject.language,education_year.year,education_year.term,course_year.year FROM subject 
+                INNER JOIN education_year ON (subject.education_year_id = education_year.id) 
+                INNER JOIN course_year ON (subject.course_year_id = course_year.id)
+                ORDER BY subject.id ASC limit 0,10";
+                $result=$conn->query($sql);
+                echo"<table class='table mt-3'>
+                        <thead>
+                            <tr>
+                                <th scope='col'>รหัสวิชา</th>
+                                <th scope='col'>รายชื่อวิชา</th>
+                                <th scope='col'>หน่วยกิต</th>
+                                <th scope='col'>ภาษา</th>
+                                <th scope='col'>ปี</th>
+                                <th scope='col'>เทอม</th>
+                                <th scope='col'>ปีการศึกษา</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                                                     
+                        
+                while($row=$result->fetch()){
+                    echo "  <tr>
+                                <td scope='row'>$row[0]</td>
+                                <td>$row[1]</td>
+                                <td>$row[2]</td>
+                                <td>$row[3]</td>
+                                <td>$row[4]</td>
+                                <td>$row[5]</td>
+                                <td>$row[6]</td>
+                            </tr>";            
+                }
+                echo "</tbody>
+                </table>";
+            ?>
 
+            
+                <div class="modal" id="Modal">
+                    <div class="modal-dialog">                
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="ModalLabel">กรุณากรอกข้อมูล</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>                              
+                            </div>
+                                                       
+
+                            <div class="modal-body">
+                                <div class="input-group mb-3">
+                                    <ul class="nav nav-tabs">
+                                        <li class="nav-item">
+                                            <a id="addone" class="nav-link active" href="#" onclick="addSingle()">เพิ่มข้อมูล</a>                                                                                        
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#" onclick="">เพิ่มข้อมูลหลายอัน</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <?php  
+                                    $mode = 0;                                  
+                                    include "page1_addsingle.php";                      
+                                ?> 
+
+                            </div>                        
+                        </div> 
+                    </div>
+                </div> 
+                        
    
-        </div>
+        </>
         <div class="col-lg-2 col-md-1 col-sm-1"></div>
     </div>
 
     <script>
-        document.getElementById("bg").style.display = "none"
-        function show() {
-            document.getElementById("bg").style.display = "flex"
+        function addSingle() {       
+            const element = document.getElementById("addone");
+            element.classList.remove("nav-link");
+            element.classList.add("nav-link active");
+                      
         }
-        function close() {
-            document.getElementById("bg").style.display = "none"
-        }
-        
     </script>
+
 </body>
 </html>
