@@ -1,5 +1,13 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { pdfjsLib } from 'pdf-lib'
+//to import this class use :
+//<script type="module">
+//  import { geminiAPI } from "./GeminiAPI.js";
+//</script>
+
+// use this in your web to make PDF Function work :
+// <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+// <script src="https://cdn.jsdelivr.net/npm/pdf-lib"></script>
+
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 class geminiAPI{
     #API_KEY;
@@ -101,9 +109,6 @@ class geminiAPI{
 
     async getDataFromPDF(file,fromPage,toPage){ 
         // getDataFromImage(document.getElementById('your-input-file-type-id-name').files,firstPageToGetData,LastPageToGetData)
-        // use this in your web to make it work
-        // <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-        // <script src="https://cdn.jsdelivr.net/npm/pdf-lib"></script>
         const prompt = `
             สกัดข้อมูลเฉพาะ รหัสวิชา ชื่อวิชา หน่วยกิต ภาษาที่วิชานั้นใช้สอน ปีการศึกษา และภาคการศึกษา 
             โดยผลลัพธ์ต้องแยกข้อมูลตามประเภท และข้อมูลใน index เดียวกันของแต่ละประเภทต้องเป็นของวิชาเดียวกัน
