@@ -5,21 +5,86 @@
 
 // use this in your web to make PDF Function work :
 // <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-// <script src="https://cdn.jsdelivr.net/npm/pdf-lib"></script>
 
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "https://esm.run/@google/generative-ai";
 
-class geminiAPI{
+export class GeminiAPI{
     #API_KEY;
     #AImodel;
     #genAI;
     #model;
     
     constructor(API_KEY = 'AIzaSyBDZGVQ1SYkgCYyopQs87xoGFsKXLFAIpg', AImodel = "gemini-1.5-flash"){
-        this.#API_KEY = API_KEY
-        this.#AImodel = AImodel
-        this.#genAI = new GoogleGenerativeAI(this.#API_KEY);
-        this.#model = this.#genAI.getGenerativeModel({ model: this.#AImodel });
+        this.#API_KEY = API_KEY;
+        this.#AImodel = AImodel;
+        const schema = {
+            "description": "Course data with separate arrays for each field",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "array",
+                "description": "List of course IDs",
+                "items": {
+                  "type": "string"
+                },
+                "nullable": false
+              },
+              "name": {
+                "type": "array",
+                "description": "List of course names",
+                "items": {
+                  "type": "string"
+                },
+                "nullable": false
+              },
+              "credit": {
+                "type": "array",
+                "description": "List of course credits",
+                "items": {
+                  "type": "integer"
+                },
+                "nullable": false
+              },
+              "language": {
+                "type": "array",
+                "description": "List of course languages",
+                "items": {
+                  "type": "string"
+                },
+                "nullable": false
+              },
+              "year": {
+                "type": "array",
+                "description": "List of course years",
+                "items": {
+                  "type": "integer"
+                },
+                "nullable": false
+              },
+              "term": {
+                "type": "array",
+                "description": "List of course terms",
+                "items": {
+                  "type": "integer"
+                },
+                "nullable": false
+              }
+            },
+            "required": ["id", "name", "credit", "language", "year", "term"]
+          }
+    
+        try {
+            this.#genAI = new GoogleGenerativeAI(this.#API_KEY);
+            this.#model = this.#genAI.getGenerativeModel({
+                model: this.#AImodel,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                },
+            });
+        } catch (error) {
+            console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ AI:", error);
+        }
     }
 
     async fileToGenerativePart(file) { // fileToGenerativePart(document.getElementById('your-input-file-type-id-name').files)
@@ -49,11 +114,11 @@ class geminiAPI{
             }
 
             เงื่อนไขเพิ่มเติม:
-            1. id: รหัสวิชา ดึงเฉพาะตัวเลขรหัสวิชา 9 หลัก ถ้า 9 หลักนั้นไม่ใช่ตัวเลขทั้งหมด ไม่ต้องสกัดข้อมูลวิชานั้น
+            1. id: รหัสวิชา ดึงเฉพาะตัวเลขรหัสวิชา 9 หลัก ถ้า 9 หลักนั้นไม่ใช่ตัวเลขทั้งหมดหรือมีตัวอักษร "x" ไม่ต้องสกัดข้อมูลวิชานั้น
             2. name: ชื่อวิชา ดึงชื่อวิชาภาษาไทย ไม่ต้องแปลหรือใช้ชื่อภาษาอังกฤษที่อยู่ในวงเล็บ
             3. credit: หน่วยกิต ดึงเฉพาะตัวเลขด้านหน้าเครื่องหมายวงเล็บ เช่น 2 จาก '2(2-0-4)'
             4. language: ภาษาที่ใช้สอน ถ้ามีเครื่องหมาย * หลังชื่อวิชา ให้กำหนดเป็น 'en' หากไม่มีให้กำหนดเป็น 'th'
-            5. year and term: ปีการศึกษา และภาคการศึกษา ระบุจากข้อมูลที่ปรากฏในหัวข้อ เช่น 'ปีที่ 1' และ 'ภาคการศึกษาที่ 2'
+            5. year and term: ปีการศึกษา และภาคการศึกษา ระบุจากข้อมูลที่ปรากฏในหัวข้อ เช่น 'ปีที่ 1' และ 'ภาคการศึกษาที่ 2' แต่ถ้าเป็น 'ภาคการศึกษาฤดูร้อน' ให้เป็น 'ภาคการศึกษาที่ 3' แทน
 
             ตัวอย่างผลลัพธ์จากข้อมูลในภาพ:
             {
@@ -92,15 +157,14 @@ class geminiAPI{
         
         try {
             const imageParts = await Promise.all(
-              [...file].map(fileToGenerativePart)
+              [...file].map(f => this.fileToGenerativePart(f))
             );
     
             const result = await this.#model.generateContent([prompt, ...imageParts]);
             const response = await result.response;
             const text = await response.text();
 
-            let genData = JSON.parse(text.substring(text.lastIndexOf("\n")+1,-1).substring(text.indexOf("\n")+1));
-
+            let genData = JSON.parse(text);
             return genData;
         }catch (error) {
             console.error(error);
@@ -128,7 +192,7 @@ class geminiAPI{
             2. name: ชื่อวิชา ดึงชื่อวิชาภาษาไทย ไม่ต้องแปลหรือใช้ชื่อภาษาอังกฤษที่อยู่ในวงเล็บ
             3. credit: หน่วยกิต ดึงเฉพาะตัวเลขด้านหน้าเครื่องหมายวงเล็บ เช่น 2 จาก '2(2-0-4)'
             4. language: ภาษาที่ใช้สอน ถ้ามีเครื่องหมาย * หลังชื่อวิชา ให้กำหนดเป็น 'en' หากไม่มีให้กำหนดเป็น 'th'
-            5. year and term: ปีการศึกษา และภาคการศึกษา ระบุจากข้อมูลที่ปรากฏในหัวข้อ เช่น 'ปีที่ 1' และ 'ภาคการศึกษาที่ 2'
+            5. year and term: ปีการศึกษา และภาคการศึกษา ระบุจากข้อมูลที่ปรากฏในหัวข้อ เช่น 'ปีที่ 1' และ 'ภาคการศึกษาที่ 2' แต่ถ้าเป็น 'ภาคการศึกษาฤดูร้อน' ให้เป็น 'ภาคการศึกษาที่ 3' แทน
 
             ตัวอย่างผลลัพธ์จากการดึงข้อมูลจากข้อความ:
             {
@@ -167,27 +231,38 @@ class geminiAPI{
         `;
         try{
             const reader = new FileReader();
-            let PDFtext = '';
+            
   
-            reader.onload = async function() {
-                const typedarray = new Uint8Array(this.result);
-  
-                const loadingTask = pdfjsLib.getDocument({ data: typedarray });
-                const pdf = await loadingTask.promise;
-  
-  
-                for (let i = fromPage; i <= pdf.numPages && i <= toPage; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-  
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    PDFtext += pageText + '\n';
-                }
+            const readPDF = (file) => {
+                return new Promise((resolve, reject) => {
+                    reader.onload = async function () {
+                        try {
+                            const typedarray = new Uint8Array(this.result);
+                            const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                            const pdf = await loadingTask.promise;
+                            let PDFtext = '';
+                            for (let i = fromPage; i <= pdf.numPages && i <= toPage; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                const pageText = textContent.items.map(item => item.str).join(' ');
+                                PDFtext += pageText + '\n';
+                            }
+        
+                            resolve(PDFtext);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
             };
+
+            const PDFtext = await readPDF(file);
+            console.log(prompt + PDFtext);
             const result = await this.#model.generateContent(prompt + PDFtext);
             const response = await result.response;
             const text = await response.text();
-            let genData = JSON.parse(text.substring(text.lastIndexOf("\n")+1,-1).substring(text.indexOf("\n")+1));
+            let genData = JSON.parse(text);
 
             reader.readAsArrayBuffer(file);
             return genData;
