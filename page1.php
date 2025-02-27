@@ -20,7 +20,8 @@
 
             <div class="mb-3 row">
                 <div class="col-sm-6">
-                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#Modal">เพิ่ม</button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#ModalSingle">เพิ่ม</button>
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#ModalAll">เพิ่ม</button>
                     <button type="button" class="btn btn-danger">ลบ</button> 
                     
                 </div> 
@@ -97,52 +98,11 @@
                 }
                 echo "</tbody>
                 </table>";
+                include "page1_addsingle.php";
+                include "page1_addmulti.php";
             ?>
-
-            
-                <div class="modal" id="Modal">
-                    <div class="modal-dialog">                
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5" id="ModalLabel">กรุณากรอกข้อมูล</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>                              
-                            </div>
-                                                       
-
-                            <div class="modal-body">
-                                <div class="input-group mb-3">
-                                    <ul class="nav nav-tabs">
-                                        <li class="nav-item">
-                                            <a id="addone" class="nav-link active" href="#" onclick="addSingle()">เพิ่มข้อมูล</a>                                                                                        
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="#" onclick="">เพิ่มข้อมูลหลายอัน</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <?php  
-                                    $mode = 0;                                  
-                                    include "page1_addsingle.php";                      
-                                ?> 
-
-                            </div>                        
-                        </div> 
-                    </div>
-                </div> 
-                        
-   
-        </>
+        </div>
         <div class="col-lg-2 col-md-1 col-sm-1"></div>
     </div>
-
-    <script>
-        function addSingle() {       
-            const element = document.getElementById("addone");
-            element.classList.remove("nav-link");
-            element.classList.add("nav-link active");
-                      
-        }
-    </script>
-
 </body>
 </html>
