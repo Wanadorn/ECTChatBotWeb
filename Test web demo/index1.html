@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Generative AI Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
+    }
+    #response {
+      margin-top: 20px;
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/generative-ai": "https://esm.run/@google/generative-ai"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Google Generative AI Demo</h1>
+    <div class="form-group">
+      <label for="prompt">Prompt:</label>
+      <textarea id="prompt" rows="4">สกัดข้อมูลเฉพาะ รหัสวิชา ชื่อวิชา หน่วยกิต ภาษาที่วิชานั้นใช้สอน ปีการศึกษา และ ภาคการศึกษา
+        หน่วยกิตไม่เอาข้อมูลที่อยู่ในวงเล็บ
+        ภาษาที่วิชานั้นใช้สอนถ้ามีเครื่องหมาย * อยู่หลังชื่อวิชาคือวิชาที่สอนเป็นภาษาอังกฤษให้บันทึกข้อมูลเป็น EN ถ้าวิชาไหนไม่มีเครื่องหมาย * อยู่หลังชื่อวิชาให้บันทึกข้อมูลเป็น TH
+        โดยไม่เอาวิชาเลือก แล้วแปลงเป็น json โดยมีหัวข้อแต่ละข้อมูลชื่อว่า subject_id subject_name credit language school_year และ term</textarea>
+    </div>
+    <div class="form-group">
+      <label for="fileInput">Select an image file:</label>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+    <button id="generateButton">Generate Content</button>
+    <div id="response"></div>
+  </div>
+
+  <script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+    const API_KEY = 'AIzaSyBDZGVQ1SYkgCYyopQs87xoGFsKXLFAIpg';
+    const genAI = new GoogleGenerativeAI(API_KEY);
+
+    async function fileToGenerativePart(file) {
+      const base64EncodedDataPromise = new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      return {
+        inlineData: { data: await base64EncodedDataPromise, mimeType: file.type },
+      };
+    }
+
+    document.getElementById('generateButton').addEventListener('click', async () => {
+      const prompt = document.getElementById('prompt').value;
+      const fileInputEl = document.getElementById('fileInput');
+      const generateButton = document.getElementById('generateButton');
+      const responseDiv = document.getElementById('response');
+
+      if (!prompt || fileInputEl.files.length === 0) {
+        alert('Please enter a prompt and select an image file.');
+        return;
+      }
+
+      // Show loading state
+      generateButton.disabled = true;
+      generateButton.textContent = 'Loading...';
+      responseDiv.innerText = '';
+
+      try {
+        const imageParts = await Promise.all(
+          [...fileInputEl.files].map(fileToGenerativePart)
+        );
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent([prompt, ...imageParts]);
+        const response = await result.response;
+        const text = await response.text();
+
+        //แสดงข้อความที่เจนออกมา
+        let genData = JSON.parse(text.substring(text.lastIndexOf("\n")+1,-1).substring(text.indexOf("\n")+1));
+
+        let dataForm = "<form>";
+        for(let i = 0; i < genData.length; i++){
+          let gendatalang = "";
+          if(genData[i].language == "TH"){
+            gendatalang = "ภาษาไทย";
+          }
+          else if(genData[i].language == "EN"){
+            gendatalang = "ภาษาอังกฤษ";
+          }
+          dataForm = dataForm + "<div><input name='subID[]'type='text' value="+genData[i].subject_id+"><input type='text' value="+genData[i].subject_name+"></div><input type='text' value="+genData[i].credit+"><input type='text' value="+gendatalang+">";
+        }
+        dataForm = dataForm + "</form>";
+        responseDiv.innerHTML = dataForm;
+      } catch (error) {
+        responseDiv.innerText = 'An error occurred while generating content.';
+        console.error(error);
+      } finally {
+        // Reset button state
+        generateButton.disabled = false;
+        generateButton.textContent = 'Generate Content';
+      }
+    });
+  </script>
+</body>
+</html>
