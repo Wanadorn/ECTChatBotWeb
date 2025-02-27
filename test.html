@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gemini API</title>
+    <script type="module">
+        import { GeminiAPI } from "./GeminiAPI.js";
+        window.gemini = new GeminiAPI();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+</head>
+<body>
+    <h1>Test Gemini API</h1>
+    
+    <h2>Upload Image</h2>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="processImage()">Process Image</button>
+    <pre id="imageResult"></pre>
+
+    <h2>Upload PDF</h2>
+    <input type="file" id="pdfInput" accept="application/pdf">
+    <label>From Page: <input type="number" id="fromPage" value="1" min="1"></label>
+    <label>To Page: <input type="number" id="toPage" value="1" min="1"></label>
+    <button onclick="processPDF()">Process PDF</button>
+    <pre id="pdfResult"></pre>
+
+    <script>
+        async function processImage() {
+            const file = document.getElementById('imageInput').files[0];
+            if (!file) {
+                alert("Please select an image file.");
+                return;
+            }
+            document.getElementById("imageResult").textContent = "Processing...";
+            const result = await window.gemini.getDataFromImage([file]);
+
+            // let str = '';
+            // for(let x=0;x < result.id.length; x++){
+            //     str += result.id[x] + "\n" + result.name[x] + result.language[x] + "\n" + result.credit[x] + "\nปีการศึกษาที่" + result.year[x] + " ภาคการศึกษาที่ " + result.term[x] + "\n ----------------------------------\n"
+            // }
+            // document.getElementById("imageResult").textContent = str
+
+            document.getElementById("imageResult").textContent = JSON.stringify(result, null, 2);
+        }
+        
+        async function processPDF() {
+            const file = document.getElementById('pdfInput').files[0];
+            const fromPage = parseInt(document.getElementById('fromPage').value);
+            const toPage = parseInt(document.getElementById('toPage').value);
+            if (!file) {
+                alert("Please select a PDF file.");
+                return;
+            }
+            document.getElementById("pdfResult").textContent = "Processing...";
+            const result = await window.gemini.getDataFromPDF(file, fromPage, toPage);
+            document.getElementById("pdfResult").textContent = JSON.stringify(result, null, 2);
+        }
+    </script>
+</body>
+</html>
